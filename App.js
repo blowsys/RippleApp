@@ -20,10 +20,8 @@ const PAD_HEIGHT = 1024;
 const {width, height} = Dimensions.get('window');
 
 
-
 //Style variables
 const pink = '#ff4682';
-
 
 
 const getRatio = () => {
@@ -31,7 +29,7 @@ const getRatio = () => {
 };
 
 const isIPad = (() => {
-    if (Platform.OS !== 'ios') return false;
+    if ('ios' !== Platform.OS) return false;
 
     if (height > width && width < PAD_WIDTH) {
         return false;
@@ -54,33 +52,56 @@ export default class App extends React.Component {
             cash: '00000',
             balance: 0,
             allowGenerate: true,
-            timer: '00:00:00'
+            timer: '00:00:00',
+            timestamp: 0
         };
-        // this.generate= this.generate.bind(this)
     }
 
     runTimer() {
-        //TODO: make timer
-        const time = moment(new Date());
-        const finishedTime = moment(time).add(1, 'hour').format('HH:mm:ss');
-        // console.log(time);
-        // console.log(finishedTime);
-        
-        // let time = 60 * 60;
-        // console.log(time);
-        // console.log(moment(time).format('HH:mm:ss'));
-        // const minVal = 1000;
-        // setInterval(() => {
-        //
-        // }, minVal)
+        this.setState({
+            allowGenerate: false
+        });
+        const intervalFunc = timestamp => {
+            const minVal = 1000;
+            let result;
+            const interval = setInterval(() => {
+                result = timestamp - moment(new Date()).unix();
+                const sec = result % 60;
+                const min = (result - sec) / 60;
+                this.setState({
+                    timer: `00 : ${min} : ${sec}`
+                });
+                if (0 >= result) {
+                    clearInterval(interval);
+                    this.setState({
+                        timestamp: 0,
+                        allowGenerate: true
+                    });
+                }
+
+            }, minVal);
+        };
+
+        let {timestamp} = this.state;
+        let time, finishedTime;
+        if (timestamp) {
+            time = moment(new Date()).unix();
+            finishedTime = timestamp;
+            if (time < finishedTime) return intervalFunc(finishedTime);
+        }
+        time = moment(new Date());
+        finishedTime = moment(time).add(1, 'hour').unix();
+        this.setState({
+            timestamp: finishedTime
+        });
+        intervalFunc(finishedTime);
     }
 
     generate() {
         if (!this.state.allowGenerate) return false;
         this.runTimer();
-        const rndNumber = rundomizer(1000000,10000000);
+        const rndNumber = rundomizer(1000000, 10000000);
         if (9000000 > rndNumber) {
-            console.log(this.state.balance);
             return this.setState({
                 cash: rndNumber,
                 balance: (parseFloat(this.state.balance) + 0.00001).toFixed(5)
@@ -90,39 +111,52 @@ export default class App extends React.Component {
             cash: rndNumber,
             balance: (parseFloat(this.state.balance) + 0.00002).toFixed(5)
         });
-
         // Generate Random Number
         function rundomizer(min, max) {
             return Math.floor(Math.random() * (max - min)) + min;
-          }
-        // this.setState((prev) => {return {cash : Math.floor(Math.random() * 9000000) + 1000000}});
+        }
+
     }
 
     async storeData() {
         try {
             // save json as string to yacheika with name State
             await AsyncStorage.setItem('State', JSON.stringify(this.state));
-            console.log(JSON.stringify(this.state));            
-          } catch (error) {
+        } catch (error) {
             // Error when save
-            console.log(error);
+            console.error(error);
         }
     }
+
     async restoreData() {
         try {
             const value = await AsyncStorage.getItem('State');
-            if (value !== null){
-                // parse json form string
-                obj = JSON.parse(value);
-                console.log(obj.cash); 
+            if (value) {
+                return value;
             }
-          } catch (error) {
+        } catch (error) {
             // Error when restore
-          }
+            console.error(error);
+        }
+    }
+
+    componentWillUpdate() {
+        this.storeData()
+            .then();
     }
 
     componentWillMount() {
-        // this.setState((prev) => {return {cash : Math.floor(Math.random() * 9000000) + 1000000}});
+        this.restoreData()
+            .then(JSON.parse)
+            .then(doc => {
+                this.setState(() => {
+                    return {
+                        ...doc,
+                        timer: "00 : 00 : 00"
+                    };
+                });
+                if (doc.timestamp) this.runTimer();
+            });
     }
 
     render() {
@@ -130,9 +164,9 @@ export default class App extends React.Component {
         let {
             cash,
             balance,
-            timer
+            timer,
+            allowGenerate
         } = this.state;
-        console.log(this.state);
 
         return (
             <View style={styles.container}>
@@ -147,13 +181,14 @@ export default class App extends React.Component {
                     justifyContent: 'center'
                 }}>
                     <Image source={require("./src/Images/MainCard.png")}
-                           style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
+                        style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
 
                     <Text
                         style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
 
                     <TouchableOpacity
+                        disabled={!allowGenerate}
                         onPress={this.generate.bind(this)}
                         style={[styles.button, getStyle(getRatio(), 'button', isIPad)]}>
                         <Text style={[styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Generate</Text>
@@ -236,7 +271,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         width: 255,
         height: 50,
-        marginBottom:30
+        marginBottom: 30
     },
     buttonText: {
         color: '#fff',
@@ -245,14 +280,14 @@ const styles = StyleSheet.create({
         fontSize: 25,
         backgroundColor: 'transparent',
     },
-    withdraw:{
-        position:'absolute',
-        bottom:30,
+    withdraw: {
+        position: 'absolute',
+        bottom: 30,
         borderBottomWidth: 3,
-        borderColor:pink,
-        paddingBottom:7
+        borderColor: pink,
+        paddingBottom: 7
     },
-    withdrawText:{
+    withdrawText: {
         color: pink,
         fontSize: 22,
         fontFamily: 'System',
@@ -261,7 +296,7 @@ const styles = StyleSheet.create({
     },
     timer: {
         color: '#fff',
-        marginBottom:170,
+        marginBottom: 170,
         fontFamily: 'System',
         fontWeight: "600",
         fontSize: 32,
