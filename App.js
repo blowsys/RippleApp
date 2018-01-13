@@ -35,7 +35,7 @@ const getStyle = (x, name, isIPad) => {
     if (isIPad) {
         return styles[name + 'Pad'];
     } else {
-        return styles[name + 'x' + x]
+        return styles[name + 'x' + x];
     }
 };
 
@@ -52,6 +52,7 @@ export default class App extends React.Component {
     }
 
     runTimer() {
+        //TODO: make timer
         const time = moment(new Date());
         const finishedTime = moment(time).add(1, 'hour').format('HH:mm:ss');
         console.log(time);
