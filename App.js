@@ -8,15 +8,23 @@ import {
     Image,
     View,
     Dimensions,
-    Alert
+    Alert,
+    AsyncStorage
 } from 'react-native';
 import PopupDialog from 'react-native-popup-dialog';
 import moment from 'moment';
 
+
 const PAD_WIDTH = 768;
 const PAD_HEIGHT = 1024;
 const {width, height} = Dimensions.get('window');
+
+
+
+//Style variables
 const pink = '#ff4682';
+
+
 
 const getRatio = () => {
     return Math.round(PixelRatio.get());
@@ -46,7 +54,7 @@ export default class App extends React.Component {
             cash: '00000',
             balance: 0,
             allowGenerate: true,
-            timer: '00 : 00 : 00'
+            timer: '00:00:00'
         };
         // this.generate= this.generate.bind(this)
     }
@@ -55,8 +63,9 @@ export default class App extends React.Component {
         //TODO: make timer
         const time = moment(new Date());
         const finishedTime = moment(time).add(1, 'hour').format('HH:mm:ss');
-        console.log(time);
-        console.log(finishedTime);
+        // console.log(time);
+        // console.log(finishedTime);
+        
         // let time = 60 * 60;
         // console.log(time);
         // console.log(moment(time).format('HH:mm:ss'));
@@ -69,8 +78,8 @@ export default class App extends React.Component {
     generate() {
         if (!this.state.allowGenerate) return false;
         this.runTimer();
-        const rndNumber = rundomizer();
-        if (9000 > rndNumber) {
+        const rndNumber = rundomizer(1000000,10000000);
+        if (9000000 > rndNumber) {
             console.log(this.state.balance);
             return this.setState({
                 cash: rndNumber,
@@ -83,11 +92,33 @@ export default class App extends React.Component {
         });
 
         // Generate Random Number
-        function rundomizer() {
-            return Math.floor(Math.random() * 10000);
-        }
-
+        function rundomizer(min, max) {
+            return Math.floor(Math.random() * (max - min)) + min;
+          }
         // this.setState((prev) => {return {cash : Math.floor(Math.random() * 9000000) + 1000000}});
+    }
+
+    async storeData() {
+        try {
+            // save json as string to yacheika with name State
+            await AsyncStorage.setItem('State', JSON.stringify(this.state));
+            console.log(JSON.stringify(this.state));            
+          } catch (error) {
+            // Error when save
+            console.log(error);
+        }
+    }
+    async restoreData() {
+        try {
+            const value = await AsyncStorage.getItem('State');
+            if (value !== null){
+                // parse json form string
+                obj = JSON.parse(value);
+                console.log(obj.cash); 
+            }
+          } catch (error) {
+            // Error when restore
+          }
     }
 
     componentWillMount() {
@@ -108,21 +139,19 @@ export default class App extends React.Component {
                 <Text style={[styles.title, getStyle(getRatio(), 'title', isIPad)]}>Ripple Generator</Text>
                 <View style={{alignSelf: 'stretch', alignContent: 'center', justifyContent: 'center'}}>
                     <Text style={[styles.subTitle, getStyle(getRatio(), 'subTitle', isIPad)]}>Balance:</Text>
-                    <Text style={[styles.balance, getStyle(getRatio(), 'balance', isIPad)]}>{this.state.balance}
-                        XRP</Text>
+                    <Text style={[styles.balance, getStyle(getRatio(), 'balance', isIPad)]}>{balance} XRP</Text>
                 </View>
                 <View style={{
                     flex: 1,
                     alignItems: 'center',
-                    justifyContent: 'flex-start'
+                    justifyContent: 'center'
                 }}>
                     <Image source={require("./src/Images/MainCard.png")}
                            style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
 
                     <Text
-                        style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{this.state.cash}</Text>
+                        style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
-                    {/*<Image source={require("./src/Images/Circle1.png")} style={[styles.circle,getStyle(getRatio(), 'circle', isIPad)]}/>*/}
 
                     <TouchableOpacity
                         onPress={this.generate.bind(this)}
@@ -139,8 +168,8 @@ export default class App extends React.Component {
                                 {text: 'OK', onPress: () => console.log('OK ButtonPressed')},
                             ]
                         )}
-                        style={[styles.button, getStyle(getRatio(), 'button', isIPad)]}>
-                        <Text style={[styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Withdraw</Text>
+                        style={[styles.withdraw, getStyle(getRatio(), 'button', isIPad)]}>
+                        <Text style={[styles.withdrawText, getStyle(getRatio(), 'buttonText', isIPad)]}>Withdraw</Text>
                     </TouchableOpacity>
 
                 </View>
@@ -198,7 +227,7 @@ const styles = StyleSheet.create({
         fontSize: 42,
         fontWeight: '800',
         backgroundColor: 'transparent',
-        marginTop: 125
+        marginBottom: 130
     },
     button: {
         backgroundColor: pink,
@@ -206,7 +235,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderRadius: 10,
         width: 255,
-        height: 50
+        height: 50,
+        marginBottom:30
     },
     buttonText: {
         color: '#fff',
@@ -214,22 +244,29 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         fontSize: 25,
         backgroundColor: 'transparent',
-        position: 'absolute',
-        left: 0,
+    },
+    withdraw:{
+        position:'absolute',
+        bottom:30,
+        borderBottomWidth: 3,
+        borderColor:pink,
+        paddingBottom:7
+    },
+    withdrawText:{
+        color: pink,
+        fontSize: 22,
+        fontFamily: 'System',
+        fontWeight: '600',
+        backgroundColor: 'transparent',
     },
     timer: {
         color: '#fff',
-        paddingTop: 25,
-        paddingBottom: 25,
+        marginBottom:170,
         fontFamily: 'System',
         fontWeight: "600",
         fontSize: 32,
         backgroundColor: 'transparent'
     },
-
-    timerPart: {},
-
-    circle: {},
     MainCard: {
         position: 'absolute',
         top: 40,
