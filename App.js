@@ -9,7 +9,8 @@ import {
     View,
     Dimensions,
     Alert,
-    AsyncStorage
+    AsyncStorage,
+    Animated
 } from 'react-native';
 import PopupDialog from 'react-native-popup-dialog';
 import moment from 'moment';
@@ -51,6 +52,7 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            animated: new Animated.Value(0),
             cash: '00000',
             balance: 0,
             allowGenerate: true,
@@ -121,8 +123,15 @@ export default class App extends React.Component {
           }
     }
 
-    componentWillMount() {
-        // this.setState((prev) => {return {cash : Math.floor(Math.random() * 9000000) + 1000000}});
+    componentDidMount() {
+        const {animated} = this.state
+        Animated.timing(
+            animated,        
+            {
+              toValue: 1,              
+              duration: 1000,
+            }
+          ).start();
     }
 
     render() {
@@ -130,7 +139,8 @@ export default class App extends React.Component {
         let {
             cash,
             balance,
-            timer
+            timer,
+            animated
         } = this.state;
         console.log(this.state);
 
@@ -140,12 +150,9 @@ export default class App extends React.Component {
                 <View style={{alignSelf: 'stretch', alignContent: 'center', justifyContent: 'center'}}>
                     <Text style={[styles.subTitle, getStyle(getRatio(), 'subTitle', isIPad)]}>Balance:</Text>
                     <Text style={[styles.balance, getStyle(getRatio(), 'balance', isIPad)]}>{balance} XRP</Text>
+                    <Animated.Text style={[styles.balanceCount,{opacity: this.state.animated}, getStyle(getRatio(), 'balanceCount', isIPad)]}>+ 0.00002 XRP</Animated.Text>
                 </View>
-                <View style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
+                <View style={styles.container}>
                     <Image source={require("./src/Images/MainCard.png")}
                            style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
 
@@ -222,12 +229,24 @@ const styles = StyleSheet.create({
         fontSize: 20,
         backgroundColor: 'transparent'
     },
+    balanceCount: {
+        color: pink,
+        right: 40,
+        top: 45,
+        width: width,
+        textAlign: 'right',
+        position: 'absolute',
+        fontFamily: 'System',
+        fontWeight: "normal",
+        fontSize: 20,
+        backgroundColor: 'transparent'
+    },
     generatedNumber: {
         color: "#fff",
         fontSize: 42,
         fontWeight: '800',
         backgroundColor: 'transparent',
-        marginBottom: 130
+        marginBottom: 140
     },
     button: {
         backgroundColor: pink,
@@ -261,7 +280,7 @@ const styles = StyleSheet.create({
     },
     timer: {
         color: '#fff',
-        marginBottom:170,
+        marginBottom:180,
         fontFamily: 'System',
         fontWeight: "600",
         fontSize: 32,
@@ -269,7 +288,7 @@ const styles = StyleSheet.create({
     },
     MainCard: {
         position: 'absolute',
-        top: 40,
+        top: 50,
         resizeMode: 'stretch',
     },
     MainCardx3: {
