@@ -13,7 +13,6 @@ import {
     AsyncStorage,
 } from 'react-native';
 import moment from 'moment';
-import CountText from './src/components/countText'
 
 
 const PAD_WIDTH = 768;
@@ -23,8 +22,8 @@ const {width, height} = Dimensions.get('window');
 
 //Style variables
 const pink = '#ff4682';
-const disabledBackground = '#dddddd';
-const disabledFont = '#000' 
+const disabledBackground = '#EDEDED';
+const disabledFont = '#aaa' 
 
 
 const getRatio = () => {
@@ -52,13 +51,15 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            // animated:new Animated.Value(0),
             cash: '00000',
+            lastReplenishment:'0.00002',
             balance: 0,
             allowGenerate: true,
             timer: '00:00:00',
             timestamp: 0
         };
+        this.opacity = new Animated.Value(0)
+        this.transform = new Animated.ValueXY({x:0,y:0})
     }
 
     runTimer() {
@@ -104,20 +105,33 @@ export default class App extends React.Component {
     }
 
     generate() {
-        // if (!this.state.allowGenerate) return false;
+        let replenishment1 = 0.00001
+        let replenishment2 = 0.00002
+        if (!this.state.allowGenerate) return false;
         this.countAnimate();
         this.runTimer();
         const rndNumber = rundomizer(1000000, 10000000);
-        if (9000000 > rndNumber) {
-            return this.setState({
-                cash: rndNumber,
-                balance: (parseFloat(this.state.balance) + 0.00001).toFixed(5)
+        if (5000000 > rndNumber) {
+            this.setState({
+                lastReplenishment:`${replenishment1}`
             });
+            setTimeout(()=>{
+                 this.setState({
+                    cash: rndNumber,
+                    balance: (parseFloat(this.state.balance) + replenishment1).toFixed(5),
+                });
+            },1000)
+        }else{
+            this.setState({
+                lastReplenishment:`${replenishment2}`
+            });
+            setTimeout(()=>{
+                this.setState({
+                    cash: rndNumber,
+                    balance: (parseFloat(this.state.balance) + replenishment2).toFixed(5),
+                });
+            },1000)
         }
-        return this.setState({
-            cash: rndNumber,
-            balance: (parseFloat(this.state.balance) + 0.00002).toFixed(5)
-        });
         // Generate Random Number
         function rundomizer(min, max) {
             return Math.floor(Math.random() * (max - min)) + min;
@@ -127,8 +141,8 @@ export default class App extends React.Component {
 
     async storeData() {
         try {
-            // const {animated,...data} = this.state //pass into data all exept animated
-            await AsyncStorage.setItem('State', JSON.stringify(this.state));
+            const {opaicty,...data} = this.state //pass into data all exept animated
+            await AsyncStorage.setItem('State', JSON.stringify(data));
         } catch (error) {
             // Error when save
             console.error(error);
@@ -152,22 +166,45 @@ export default class App extends React.Component {
             .then();
     }
 
-    componentDidMount() {
-        // console.log(this.state);
-        // this.setState(() => {
-        //     return {
-        //         animated: new Animated.Value(0),
-        //     };
-        // });
-        // console.log(this.state);
-        // const {animated} = this.state
-        // Animated.timing(
-        //     animated,        
-        //     {
-        //       toValue: 1,              
-        //       duration: 1000,
-        //     }
-        //   ).start();
+    animate() {
+        Animated.sequence([
+            Animated.parallel([
+            Animated.timing(
+              this.opacity,
+              {
+                toValue: 1,
+                duration: 200
+              }),
+            Animated.spring(
+              this.transform,
+              {
+                toValue: {x:0,y:-25},
+                duration: 200,
+                bounciness:10,
+              })
+            ]),
+            Animated.parallel([
+            Animated.timing(
+              this.opacity,
+              {
+                toValue: 0,
+                duration: 200
+              }),
+            Animated.spring(
+              this.transform,
+              {
+                toValue: {x:0,y:-50},
+                duration: 150,
+              })
+            ]),
+            Animated.timing(
+              this.transform,
+              {
+                toValue: {x:0,y:0},
+                duration: 0,
+              }),
+            
+            ]).start()
     }
 
     componentWillMount() {
@@ -184,7 +221,7 @@ export default class App extends React.Component {
     }
 
     countAnimate = () => {
-            this.сountText.method()
+            this.animate()
       }
 
     render() {
@@ -194,7 +231,8 @@ export default class App extends React.Component {
             balance,
             timer,
             animated,
-            allowGenerate
+            allowGenerate,
+            lastReplenishment
         } = this.state;
 
         return (
@@ -203,11 +241,16 @@ export default class App extends React.Component {
                 <View style={{alignSelf: 'stretch', alignContent: 'center', justifyContent: 'center'}}>
                     <Text style={[styles.subTitle, getStyle(getRatio(), 'subTitle', isIPad)]}>Balance:</Text>
                     <Text style={[styles.balance, getStyle(getRatio(), 'balance', isIPad)]}>{balance} XRP</Text>
-                    <CountText onRef={ref => (this.сountText = ref)}>
-                        <Text style={[styles.balanceCount, getStyle(getRatio(), 'balanceCount', isIPad)]}>
-                        + 0.00002 XRP
-                        </Text>
-                    </CountText>
+                    <Animated.Text style={[styles.balanceCount, getStyle(getRatio(), 'balanceCount', isIPad),{
+                        opacity: this.opacity,
+                        transform:[
+                          {
+                            translateY:this.transform.y
+                          }
+                        ]
+                    }]}>
+                        + {lastReplenishment} XRP
+                    </Animated.Text>
                 </View>
                 <View style={styles.container}>
                     <Image source={require("./src/Images/MainCard.png")}
@@ -216,7 +259,7 @@ export default class App extends React.Component {
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
 
                     <TouchableOpacity
-                        // disabled={!allowGenerate}
+                        disabled={!allowGenerate}
                         onPress={this.generate.bind(this)}
                         style={!allowGenerate?[styles.button,{backgroundColor:disabledBackground}, getStyle(getRatio(), 'button', isIPad)]:[styles.button, getStyle(getRatio(), 'button', isIPad)]}>
                         <Text style={!allowGenerate?[styles.buttonText,{color:disabledFont}, getStyle(getRatio(), 'buttonText', isIPad)]:[styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Generate</Text>
@@ -239,6 +282,7 @@ export default class App extends React.Component {
         );
     }
 }
+
 
 const styles = StyleSheet.create({
     container: {
