@@ -23,7 +23,7 @@ const {width, height} = Dimensions.get('window');
 //Style variables
 const pink = '#ff4682';
 const disabledBackground = '#EDEDED';
-const disabledFont = '#aaa' 
+const disabledFont = '#aaa'
 
 
 const getRatio = () => {
@@ -52,14 +52,14 @@ export default class App extends React.Component {
         super(props);
         this.state = {
             cash: '00000',
-            lastReplenishment:'0.00002',
+            lastReplenishment: '0.00002',
             balance: 0,
             allowGenerate: true,
             timer: '00:00:00',
             timestamp: 0
         };
-        this.opacity = new Animated.Value(0)
-        this.transform = new Animated.ValueXY({x:0,y:0})
+        this.opacity = new Animated.Value(0);
+        this.transform = new Animated.ValueXY({x: 0, y: 0});
     }
 
     runTimer() {
@@ -72,9 +72,9 @@ export default class App extends React.Component {
             const interval = setInterval(() => {
                 result = timestamp - moment(new Date()).unix();
                 let sec = result % 60;
-                const seconds = sec.toString().length < 2 ? '0'+sec.toString() : sec
+                const seconds = sec.toString().length < 2 ? '0' + sec.toString() : sec;
                 const min = (result - sec) / 60;
-                const minutes = min.toString().length < 2 ? '0'+min.toString() : min
+                const minutes = min.toString().length < 2 ? '0' + min.toString() : min;
                 this.setState({
                     timer: `00:${minutes}:${seconds}`
                 });
@@ -82,13 +82,12 @@ export default class App extends React.Component {
                     clearInterval(interval);
                     this.setState({
                         timestamp: 0,
-                        allowGenerate: true
+                        allowGenerate: true,
+                        timer: '00:00:00'
                     });
                 }
-
             }, minVal);
         };
-
         let {timestamp} = this.state;
         let time, finishedTime;
         if (timestamp) {
@@ -97,41 +96,36 @@ export default class App extends React.Component {
             if (time < finishedTime) return intervalFunc(finishedTime);
         }
         time = moment(new Date());
-        finishedTime = moment(time).add(1, 'hour').unix();
+        finishedTime = moment(time).add(5, 'minutes').unix();
         this.setState({
             timestamp: finishedTime
         });
         intervalFunc(finishedTime);
     }
 
+    allowGenerate() {
+        this.setState({
+            allowGenerate: true,
+            timer: '00:00:00'
+        });
+    }
+
     generate() {
-        let replenishment1 = 0.00001
-        let replenishment2 = 0.00002
+        let replenishment1 = 0.00001;
         if (!this.state.allowGenerate) return false;
         this.countAnimate();
         this.runTimer();
         const rndNumber = rundomizer(1000000, 10000000);
-        if (5000000 > rndNumber) {
+        this.setState({
+            lastReplenishment: `${replenishment1}`
+        });
+        setTimeout(() => {
             this.setState({
-                lastReplenishment:`${replenishment1}`
+                cash: rndNumber,
+                balance: (parseFloat(this.state.balance) + replenishment1).toFixed(5),
             });
-            setTimeout(()=>{
-                 this.setState({
-                    cash: rndNumber,
-                    balance: (parseFloat(this.state.balance) + replenishment1).toFixed(5),
-                });
-            },1000)
-        }else{
-            this.setState({
-                lastReplenishment:`${replenishment2}`
-            });
-            setTimeout(()=>{
-                this.setState({
-                    cash: rndNumber,
-                    balance: (parseFloat(this.state.balance) + replenishment2).toFixed(5),
-                });
-            },1000)
-        }
+        }, 1000);
+
         // Generate Random Number
         function rundomizer(min, max) {
             return Math.floor(Math.random() * (max - min)) + min;
@@ -141,7 +135,7 @@ export default class App extends React.Component {
 
     async storeData() {
         try {
-            const {opaicty,...data} = this.state //pass into data all exept animated
+            const {opaicty, ...data} = this.state; //pass into data all exept animated
             await AsyncStorage.setItem('State', JSON.stringify(data));
         } catch (error) {
             // Error when save
@@ -169,60 +163,64 @@ export default class App extends React.Component {
     animate() {
         Animated.sequence([
             Animated.parallel([
-            Animated.timing(
-              this.opacity,
-              {
-                toValue: 1,
-                duration: 200
-              }),
-            Animated.spring(
-              this.transform,
-              {
-                toValue: {x:0,y:-25},
-                duration: 200,
-                bounciness:10,
-              })
+                Animated.timing(
+                    this.opacity,
+                    {
+                        toValue: 1,
+                        duration: 200
+                    }),
+                Animated.spring(
+                    this.transform,
+                    {
+                        toValue: {x: 0, y: -25},
+                        duration: 200,
+                        bounciness: 10,
+                    })
             ]),
             Animated.parallel([
-            Animated.timing(
-              this.opacity,
-              {
-                toValue: 0,
-                duration: 200
-              }),
-            Animated.spring(
-              this.transform,
-              {
-                toValue: {x:0,y:-50},
-                duration: 150,
-              })
+                Animated.timing(
+                    this.opacity,
+                    {
+                        toValue: 0,
+                        duration: 200
+                    }),
+                Animated.spring(
+                    this.transform,
+                    {
+                        toValue: {x: 0, y: -50},
+                        duration: 150,
+                    })
             ]),
             Animated.timing(
-              this.transform,
-              {
-                toValue: {x:0,y:0},
-                duration: 0,
-              }),
-            
-            ]).start()
+                this.transform,
+                {
+                    toValue: {x: 0, y: 0},
+                    duration: 0,
+                }),
+
+        ]).start();
     }
 
     componentWillMount() {
         this.restoreData()
             .then(JSON.parse)
             .then(doc => {
+                console.log(doc);
                 this.setState(() => {
                     return {
                         ...doc
                     };
                 });
-                if (doc.timestamp) this.runTimer();
-            })
+                const time = moment(new Date()).unix();
+                doc.timestamp > time
+                    ? this.runTimer()
+                    : this.allowGenerate();
+            });
     }
 
     countAnimate = () => {
-            this.animate()
-      }
+        this.animate();
+    }
 
     render() {
 
@@ -241,12 +239,12 @@ export default class App extends React.Component {
                 <View style={{alignSelf: 'stretch', alignContent: 'center', justifyContent: 'center'}}>
                     <Text style={[styles.subTitle, getStyle(getRatio(), 'subTitle', isIPad)]}>Balance:</Text>
                     <Text style={[styles.balance, getStyle(getRatio(), 'balance', isIPad)]}>{balance} XRP</Text>
-                    <Animated.Text style={[styles.balanceCount, getStyle(getRatio(), 'balanceCount', isIPad),{
+                    <Animated.Text style={[styles.balanceCount, getStyle(getRatio(), 'balanceCount', isIPad), {
                         opacity: this.opacity,
-                        transform:[
-                          {
-                            translateY:this.transform.y
-                          }
+                        transform: [
+                            {
+                                translateY: this.transform.y
+                            }
                         ]
                     }]}>
                         + {lastReplenishment} XRP
@@ -254,15 +252,17 @@ export default class App extends React.Component {
                 </View>
                 <View style={styles.container}>
                     <Image source={require("./src/Images/MainCard.png")}
-                        style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
-                    <Text style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
+                           style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
+                    <Text
+                        style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
 
                     <TouchableOpacity
                         disabled={!allowGenerate}
                         onPress={this.generate.bind(this)}
-                        style={!allowGenerate?[styles.button,{backgroundColor:disabledBackground}, getStyle(getRatio(), 'button', isIPad)]:[styles.button, getStyle(getRatio(), 'button', isIPad)]}>
-                        <Text style={!allowGenerate?[styles.buttonText,{color:disabledFont}, getStyle(getRatio(), 'buttonText', isIPad)]:[styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Generate</Text>
+                        style={!allowGenerate ? [styles.button, {backgroundColor: disabledBackground}, getStyle(getRatio(), 'button', isIPad)] : [styles.button, getStyle(getRatio(), 'button', isIPad)]}>
+                        <Text
+                            style={!allowGenerate ? [styles.buttonText, {color: disabledFont}, getStyle(getRatio(), 'buttonText', isIPad)] : [styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Generate</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => Alert.alert(
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     },
     timer: {
         color: '#fff',
-        marginBottom:180,
+        marginBottom: 180,
         fontFamily: 'System',
         fontWeight: "600",
         fontSize: 32,
