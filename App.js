@@ -9,11 +9,11 @@ import {
     View,
     Dimensions,
     Alert,
+    Animated,
     AsyncStorage,
-    Animated
 } from 'react-native';
-import PopupDialog from 'react-native-popup-dialog';
 import moment from 'moment';
+import CountText from './src/components/countText'
 
 
 const PAD_WIDTH = 768;
@@ -21,10 +21,10 @@ const PAD_HEIGHT = 1024;
 const {width, height} = Dimensions.get('window');
 
 
-
 //Style variables
 const pink = '#ff4682';
-
+const disabledBackground = '#dddddd';
+const disabledFont = '#000' 
 
 
 const getRatio = () => {
@@ -32,7 +32,7 @@ const getRatio = () => {
 };
 
 const isIPad = (() => {
-    if (Platform.OS !== 'ios') return false;
+    if ('ios' !== Platform.OS) return false;
 
     if (height > width && width < PAD_WIDTH) {
         return false;
@@ -52,37 +52,63 @@ export default class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            animated: new Animated.Value(0),
+            // animated:new Animated.Value(0),
             cash: '00000',
             balance: 0,
             allowGenerate: true,
-            timer: '00:00:00'
+            timer: '00:00:00',
+            timestamp: 0
         };
-        // this.generate= this.generate.bind(this)
     }
 
     runTimer() {
-        //TODO: make timer
-        const time = moment(new Date());
-        const finishedTime = moment(time).add(1, 'hour').format('HH:mm:ss');
-        // console.log(time);
-        // console.log(finishedTime);
-        
-        // let time = 60 * 60;
-        // console.log(time);
-        // console.log(moment(time).format('HH:mm:ss'));
-        // const minVal = 1000;
-        // setInterval(() => {
-        //
-        // }, minVal)
+        this.setState({
+            allowGenerate: false
+        });
+        const intervalFunc = timestamp => {
+            const minVal = 1000;
+            let result;
+            const interval = setInterval(() => {
+                result = timestamp - moment(new Date()).unix();
+                let sec = result % 60;
+                const seconds = sec.toString().length < 2 ? '0'+sec.toString() : sec
+                const min = (result - sec) / 60;
+                const minutes = min.toString().length < 2 ? '0'+min.toString() : min
+                this.setState({
+                    timer: `00:${minutes}:${seconds}`
+                });
+                if (0 >= result) {
+                    clearInterval(interval);
+                    this.setState({
+                        timestamp: 0,
+                        allowGenerate: true
+                    });
+                }
+
+            }, minVal);
+        };
+
+        let {timestamp} = this.state;
+        let time, finishedTime;
+        if (timestamp) {
+            time = moment(new Date()).unix();
+            finishedTime = timestamp;
+            if (time < finishedTime) return intervalFunc(finishedTime);
+        }
+        time = moment(new Date());
+        finishedTime = moment(time).add(1, 'hour').unix();
+        this.setState({
+            timestamp: finishedTime
+        });
+        intervalFunc(finishedTime);
     }
 
     generate() {
-        if (!this.state.allowGenerate) return false;
+        // if (!this.state.allowGenerate) return false;
+        this.countAnimate();
         this.runTimer();
-        const rndNumber = rundomizer(1000000,10000000);
+        const rndNumber = rundomizer(1000000, 10000000);
         if (9000000 > rndNumber) {
-            console.log(this.state.balance);
             return this.setState({
                 cash: rndNumber,
                 balance: (parseFloat(this.state.balance) + 0.00001).toFixed(5)
@@ -92,47 +118,74 @@ export default class App extends React.Component {
             cash: rndNumber,
             balance: (parseFloat(this.state.balance) + 0.00002).toFixed(5)
         });
-
         // Generate Random Number
         function rundomizer(min, max) {
             return Math.floor(Math.random() * (max - min)) + min;
-          }
-        // this.setState((prev) => {return {cash : Math.floor(Math.random() * 9000000) + 1000000}});
+        }
+
     }
 
     async storeData() {
         try {
-            // save json as string to yacheika with name State
+            // const {animated,...data} = this.state //pass into data all exept animated
             await AsyncStorage.setItem('State', JSON.stringify(this.state));
-            console.log(JSON.stringify(this.state));            
-          } catch (error) {
+        } catch (error) {
             // Error when save
-            console.log(error);
+            console.error(error);
         }
     }
+
     async restoreData() {
         try {
             const value = await AsyncStorage.getItem('State');
-            if (value !== null){
-                // parse json form string
-                obj = JSON.parse(value);
-                console.log(obj.cash); 
+            if (value) {
+                return value;
             }
-          } catch (error) {
+        } catch (error) {
             // Error when restore
-          }
+            console.error(error);
+        }
+    }
+
+    componentWillUpdate() {
+        this.storeData()
+            .then();
     }
 
     componentDidMount() {
-        const {animated} = this.state
-        Animated.timing(
-            animated,        
-            {
-              toValue: 1,              
-              duration: 1000,
-            }
-          ).start();
+        // console.log(this.state);
+        // this.setState(() => {
+        //     return {
+        //         animated: new Animated.Value(0),
+        //     };
+        // });
+        // console.log(this.state);
+        // const {animated} = this.state
+        // Animated.timing(
+        //     animated,        
+        //     {
+        //       toValue: 1,              
+        //       duration: 1000,
+        //     }
+        //   ).start();
     }
+
+    componentWillMount() {
+        this.restoreData()
+            .then(JSON.parse)
+            .then(doc => {
+                this.setState(() => {
+                    return {
+                        ...doc
+                    };
+                });
+                if (doc.timestamp) this.runTimer();
+            })
+    }
+
+    countAnimate = () => {
+            this.сountText.method()
+      }
 
     render() {
 
@@ -140,9 +193,9 @@ export default class App extends React.Component {
             cash,
             balance,
             timer,
-            animated
+            animated,
+            allowGenerate
         } = this.state;
-        console.log(this.state);
 
         return (
             <View style={styles.container}>
@@ -150,20 +203,23 @@ export default class App extends React.Component {
                 <View style={{alignSelf: 'stretch', alignContent: 'center', justifyContent: 'center'}}>
                     <Text style={[styles.subTitle, getStyle(getRatio(), 'subTitle', isIPad)]}>Balance:</Text>
                     <Text style={[styles.balance, getStyle(getRatio(), 'balance', isIPad)]}>{balance} XRP</Text>
-                    <Animated.Text style={[styles.balanceCount,{opacity: this.state.animated}, getStyle(getRatio(), 'balanceCount', isIPad)]}>+ 0.00002 XRP</Animated.Text>
+                    <CountText onRef={ref => (this.сountText = ref)}>
+                        <Text style={[styles.balanceCount, getStyle(getRatio(), 'balanceCount', isIPad)]}>
+                        + 0.00002 XRP
+                        </Text>
+                    </CountText>
                 </View>
                 <View style={styles.container}>
                     <Image source={require("./src/Images/MainCard.png")}
-                           style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
-
-                    <Text
-                        style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
+                        style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
+                    <Text style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
 
                     <TouchableOpacity
+                        // disabled={!allowGenerate}
                         onPress={this.generate.bind(this)}
-                        style={[styles.button, getStyle(getRatio(), 'button', isIPad)]}>
-                        <Text style={[styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Generate</Text>
+                        style={!allowGenerate?[styles.button,{backgroundColor:disabledBackground}, getStyle(getRatio(), 'button', isIPad)]:[styles.button, getStyle(getRatio(), 'button', isIPad)]}>
+                        <Text style={!allowGenerate?[styles.buttonText,{color:disabledFont}, getStyle(getRatio(), 'buttonText', isIPad)]:[styles.buttonText, getStyle(getRatio(), 'buttonText', isIPad)]}>Generate</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => Alert.alert(
@@ -178,7 +234,6 @@ export default class App extends React.Component {
                         style={[styles.withdraw, getStyle(getRatio(), 'button', isIPad)]}>
                         <Text style={[styles.withdrawText, getStyle(getRatio(), 'buttonText', isIPad)]}>Withdraw</Text>
                     </TouchableOpacity>
-
                 </View>
             </View>
         );
@@ -214,7 +269,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         fontFamily: 'System',
         fontWeight: "normal",
-        fontSize: 20,
+        fontSize: 22,
         backgroundColor: 'transparent'
     },
     balance: {
@@ -226,19 +281,19 @@ const styles = StyleSheet.create({
         position: 'absolute',
         fontFamily: 'System',
         fontWeight: "normal",
-        fontSize: 20,
+        fontSize: 22,
         backgroundColor: 'transparent'
     },
     balanceCount: {
         color: pink,
         right: 40,
-        top: 45,
+        top: 55,
         width: width,
         textAlign: 'right',
         position: 'absolute',
         fontFamily: 'System',
         fontWeight: "normal",
-        fontSize: 20,
+        fontSize: 22,
         backgroundColor: 'transparent'
     },
     generatedNumber: {
@@ -255,7 +310,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         width: 255,
         height: 50,
-        marginBottom:30
+        marginBottom: 30
     },
     buttonText: {
         color: '#fff',
@@ -264,14 +319,14 @@ const styles = StyleSheet.create({
         fontSize: 25,
         backgroundColor: 'transparent',
     },
-    withdraw:{
-        position:'absolute',
-        bottom:30,
+    withdraw: {
+        position: 'absolute',
+        bottom: 30,
         borderBottomWidth: 3,
-        borderColor:pink,
-        paddingBottom:7
+        borderColor: pink,
+        paddingBottom: 7
     },
-    withdrawText:{
+    withdrawText: {
         color: pink,
         fontSize: 22,
         fontFamily: 'System',
