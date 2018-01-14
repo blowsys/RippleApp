@@ -27,13 +27,13 @@ const disabledFont = '#aaa'
 
 
 const getRatio = () => {
-    return Math.round(PixelRatio.get());
+    return width==1024? 5 : width==414? 4: width==320? 1 : Math.round(PixelRatio.get());
 };
 
 const isIPad = (() => {
     if ('ios' !== Platform.OS) return false;
 
-    if (height > width && width < PAD_WIDTH) {
+    if (width == 1024 || width < PAD_WIDTH) {
         return false;
     }
     return true;
@@ -112,16 +112,18 @@ export default class App extends React.Component {
 
     generate() {
         let replenishment1 = 0.00001;
-        if (!this.state.allowGenerate) return false;
+        // if (!this.state.allowGenerate) return false;
         this.countAnimate();
         this.runTimer();
         const rndNumber = rundomizer(1000000, 10000000);
         this.setState({
             lastReplenishment: `${replenishment1}`
         });
+        this.setState({
+            cash: rndNumber
+        });
         setTimeout(() => {
             this.setState({
-                cash: rndNumber,
                 balance: (parseFloat(this.state.balance) + replenishment1).toFixed(5),
             });
         }, 1000);
@@ -222,6 +224,17 @@ export default class App extends React.Component {
         this.animate();
     }
 
+    image = () => {
+        if (isIPad||width==1024){
+            return <Image source={require("./src/Images/MainCardPad.png")}
+                           style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
+        }
+        if(!isIPad){
+            return <Image source={require("./src/Images/MainCard.png")}
+                            style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
+        }
+    }
+
     render() {
 
         let {
@@ -250,15 +263,13 @@ export default class App extends React.Component {
                         + {lastReplenishment} XRP
                     </Animated.Text>
                 </View>
-                <View style={styles.container}>
-                    <Image source={require("./src/Images/MainCard.png")}
-                           style={[styles.MainCard, getStyle(getRatio(), 'MainCard', isIPad)]}/>
-                    <Text
-                        style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
+                <View style={styles.container1}>
+                    {this.image()}
+                    <Text style={[styles.generatedNumber, getStyle(getRatio(), 'generatedNumber', isIPad)]}>{cash}</Text>
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
 
                     <TouchableOpacity
-                        disabled={!allowGenerate}
+                        // disabled={!allowGenerate}
                         onPress={this.generate.bind(this)}
                         style={!allowGenerate ? [styles.button, {backgroundColor: disabledBackground}, getStyle(getRatio(), 'button', isIPad)] : [styles.button, getStyle(getRatio(), 'button', isIPad)]}>
                         <Text
@@ -274,8 +285,8 @@ export default class App extends React.Component {
                                 {text: 'OK', onPress: () => console.log('OK ButtonPressed')},
                             ]
                         )}
-                        style={[styles.withdraw, getStyle(getRatio(), 'button', isIPad)]}>
-                        <Text style={[styles.withdrawText, getStyle(getRatio(), 'buttonText', isIPad)]}>Withdraw</Text>
+                        style={[styles.withdraw, getStyle(getRatio(), 'withdraw', isIPad)]}>
+                        <Text style={[styles.withdrawText, getStyle(getRatio(), 'withdrawText', isIPad)]}>Withdraw</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -290,6 +301,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
+    container1: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'flex-start'
+    },
     title: {
         color: pink,
         paddingTop: 45,
@@ -299,6 +315,12 @@ const styles = StyleSheet.create({
         fontFamily: 'System',
         fontWeight: "800",
         fontSize: 30
+    },
+    titlex2: {
+        paddingTop: 20,
+    },
+    titlex1: {
+        paddingTop: 25,
     },
     textContainer: {
         alignSelf: 'stretch',
@@ -316,6 +338,17 @@ const styles = StyleSheet.create({
         fontSize: 22,
         backgroundColor: 'transparent'
     },
+    subTitlex1: {
+        fontSize:18
+    },
+    subTitlex5: {
+        top:15,
+        fontSize:24
+    },
+    subTitlePad: {
+        top:15,
+        fontSize:24
+    },
     balance: {
         color: pink,
         right: 40,
@@ -327,6 +360,17 @@ const styles = StyleSheet.create({
         fontWeight: "normal",
         fontSize: 22,
         backgroundColor: 'transparent'
+    },
+    balancex1: {
+        fontSize:18
+    },
+    balancex5: {
+        top:15,
+        fontSize:24
+    },
+    balancePad: {
+        top:15,
+        fontSize:24
     },
     balanceCount: {
         color: pink,
@@ -340,21 +384,91 @@ const styles = StyleSheet.create({
         fontSize: 22,
         backgroundColor: 'transparent'
     },
+    balanceCountx2: {
+        top: 52,
+    },
+    balanceCountx1: {
+        fontSize: 18,
+        top: 52,
+    },
+    balanceCountx5: {
+        top:65,
+        fontSize: 24,
+    },
+    balanceCountPad: {
+        top:65,
+        fontSize: 24,
+    },
     generatedNumber: {
         color: "#fff",
         fontSize: 42,
         fontWeight: '800',
         backgroundColor: 'transparent',
-        marginBottom: 140
+        marginTop: 140
+    },
+    generatedNumberPad:{
+        marginTop: 160
+    },
+    generatedNumberx5:{
+        marginTop: 260
+    },
+    generatedNumberx2:{
+        marginTop: 120
+    },
+    generatedNumberx1:{
+        marginTop: 100
+    },
+    timer: {
+        color: '#fff',
+        marginTop:130,
+        marginBottom: 170,
+        fontFamily: 'System',
+        fontWeight: "600",
+        fontSize: 32,
+        backgroundColor: 'transparent'
+    },
+    timerx5: {
+        marginTop:250,
+        marginBottom: 325,
+        fontSize: 38,
+    },
+    timerPad: {
+        marginTop:240,
+        marginBottom: 240,
+        fontSize: 38,
+    },
+    timerx4: {
+        marginTop:130,
+        marginBottom: 130,
+    },
+    timerx2: {
+        marginTop:130,
+        marginBottom: 120,
+    },
+    timerx1: {
+        marginTop:100,
+        marginBottom:100,
     },
     button: {
         backgroundColor: pink,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: 10,
+        borderRadius: 9,
         width: 255,
         height: 50,
-        marginBottom: 30
+    },    
+    buttonPad: {
+        width: 350,
+        height:60
+    },
+    buttonx5: {
+        width: 350,
+        height:75,
+        borderRadius:10
+    },
+    buttonx1: {
+        width: 220,
+        borderRadius: 8,
     },
     buttonText: {
         color: '#fff',
@@ -363,12 +477,36 @@ const styles = StyleSheet.create({
         fontSize: 25,
         backgroundColor: 'transparent',
     },
+    buttonTextx5: {
+        fontSize:28
+    },
+    buttonTextPad: {
+        fontSize:28
+    },
     withdraw: {
         position: 'absolute',
         bottom: 30,
         borderBottomWidth: 3,
         borderColor: pink,
         paddingBottom: 7
+    },
+    withdrawx4:{
+        borderColor:'#fff',
+        bottom:55,
+        borderBottomWidth: 2,
+        paddingBottom: 5
+    },
+    withdrawx2:{
+        borderColor:'#fff',
+        bottom:55,
+        borderBottomWidth: 2,
+        paddingBottom: 5
+    },
+    withdrawx1:{
+        borderColor:'#fff',
+        bottom:15,
+        borderBottomWidth: 1,
+        paddingBottom: 5
     },
     withdrawText: {
         color: pink,
@@ -377,20 +515,41 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         backgroundColor: 'transparent',
     },
-    timer: {
-        color: '#fff',
-        marginBottom: 180,
-        fontFamily: 'System',
-        fontWeight: "600",
-        fontSize: 32,
-        backgroundColor: 'transparent'
+    withdrawTextx4: {
+        color:'#fff',
+        fontSize: 20,
+    },
+    withdrawTextx2: {
+        color:'#fff',
+        fontSize: 20,
+    },
+    withdrawTextx1: {
+        color:'#fff',
+        fontSize: 20,
     },
     MainCard: {
         position: 'absolute',
         top: 50,
-        resizeMode: 'stretch',
+        resizeMode: 'contain',
     },
-    MainCardx3: {
-        resizeMode: 'stretch'
+    MainCardPad: {
+        width:width-250,
+        top:-125
+    },
+    MainCardx5: {
+        width:width-400,
+        top:25
+    },
+    MainCardx4: {
+        width:width-15,
+        resizeMode: 'contain',
+    },
+    MainCardx2: {
+        width:width-15,
+        top: 35,
+    },
+    MainCardx1: {
+        width:width,
+        top: 0,
     },
 });
