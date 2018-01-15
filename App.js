@@ -13,17 +13,26 @@ import {
     AsyncStorage,
 } from 'react-native';
 import moment from 'moment';
+import {
+    AdMobBanner,
+    AdMobInterstitial,
+    PublisherBanner,
+    AdMobRewarded
+} from 'expo';
 
+// Display a rewarded ad
+AdMobRewarded.setAdUnitID('ca-app-pub-6287272260079357/6312241659'); // Test ID, Replace with your-admob-unit-id
+AdMobRewarded.setTestDeviceID('EMULATOR');
+AdMobRewarded.requestAd(() => AdMobRewarded.showAd());
 
 const PAD_WIDTH = 768;
 const PAD_HEIGHT = 1024;
 const {width, height} = Dimensions.get('window');
 
-
 //Style variables
 const pink = '#ff4682';
 const disabledBackground = '#EDEDED';
-const disabledFont = '#aaa'
+const disabledFont = '#aaa';
 
 
 const getRatio = () => {
@@ -205,7 +214,6 @@ export default class App extends React.Component {
         this.restoreData()
             .then(JSON.parse)
             .then(doc => {
-                console.log(doc);
                 this.setState(() => {
                     return {
                         ...doc
