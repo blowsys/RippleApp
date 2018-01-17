@@ -140,7 +140,7 @@ export default class App extends React.Component {
     }
 
     generate() {
-        if (!this.state.allowGenerate) return;
+        // if (!this.state.allowGenerate) return;
         let replenishment1 = 0.00001;
         this.countAnimate();
         this.runTimer();
@@ -152,9 +152,14 @@ export default class App extends React.Component {
             AdMobRewarded.addEventListener('rewardedVideoDidRewardUser', (doc) => {
                 console.log(doc);
                 replenishment1 = 0.001;
-                this.setState({
-                    balance: (parseFloat(this.state.balance) + replenishment1).toFixed(5),
-                });
+
+                this.countAnimate();
+                
+                setTimeout(() => {
+                    this.setState({
+                        balance: (parseFloat(this.state.balance) + replenishment1).toFixed(5),
+                    });
+                }, 1000);
             });
         }
         this.setState({
