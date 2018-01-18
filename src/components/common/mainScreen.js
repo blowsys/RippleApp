@@ -1,17 +1,16 @@
-import React, { Component, View, Text } from 'react-native';
+import React, { Component } from 'react';
+import {View, Text } from 'react-native';
 
-class mainScreen extends Component {
+export default class mainScreen extends Component {
 
     render() {
 
         return (
             <View>
-            <Text>dsfafasaaasdsa</Text>
+                <Text>dsfafasaaasdsa</Text>
             </View>
         );
 
     }
 
-};
-
-export { mainScreen };
+}

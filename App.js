@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import {
     StyleSheet,
     PixelRatio,
@@ -80,7 +80,7 @@ const getStyle = (x, name, isIPad) => {
     }
 };
 
-export default class App extends React.Component {
+export default class App extends Component {
     constructor(props) {
         super(props);
         this.state = {

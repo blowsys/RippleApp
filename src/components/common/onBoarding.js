@@ -1,17 +1,14 @@
-import React, { Component, View, Text } from 'react-native';
+import React, { Component } from 'react';
+import { View, Text } from 'react-native';
 
-class onBoarding extends Component {
-
+export default class onBoarding extends Component {
     render() {
 
         return (
             <View>
-            <Text>dsfafasdfaaaasdsa</Text>
+                <Text>dsfafasdfaaaasdsa</Text>
             </View>
         );
 
     }
-
-};
-
-export { onBoarding };
+}
