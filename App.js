@@ -13,10 +13,14 @@ import {
     AsyncStorage,
 } from 'react-native';
 import moment from 'moment';
-import {
+import Expo, {
     AdMobInterstitial,
     AdMobRewarded
 } from 'expo';
+
+import {onBoarding , mainScreen} from './src/components/common';
+
+Expo.ScreenOrientation.allow(Expo.ScreenOrientation.Orientation.PORTRAIT);
 
 const ADMOB = {
     ios: {
@@ -85,7 +89,8 @@ export default class App extends React.Component {
             balance: 0,
             allowGenerate: true,
             timer: '00:00:00',
-            timestamp: 0
+            timestamp: 0,
+            startScreen:false,
         };
         this.opacity = new Animated.Value(0);
         this.transform = new Animated.ValueXY({x: 0, y: 0});
@@ -195,8 +200,10 @@ export default class App extends React.Component {
         try {
             const value = await AsyncStorage.getItem('State');
             if (value) {
+                this.setState({ startScreen: false })
                 return value;
-            }
+            } else
+                this.setState({ startScreen: true })
         } catch (error) {
             // Error when restore
             console.error(error);
@@ -315,7 +322,7 @@ export default class App extends React.Component {
                     <Text style={[styles.timer, getStyle(getRatio(), 'timer', isIPad)]}>{timer}</Text>
 
                     <TouchableOpacity
-                        // disabled={!allowGenerate}
+                        disabled={!allowGenerate}
                         onPress={this.generate.bind(this)}
                         style={!allowGenerate ? [styles.button, {backgroundColor: disabledBackground}, getStyle(getRatio(), 'button', isIPad)] : [styles.button, getStyle(getRatio(), 'button', isIPad)]}>
                         <Text
